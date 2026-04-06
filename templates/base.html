@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}FireFound{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0a0a0a;
+      --surface:    #111111;
+      --surface2:   #181818;
+      --border:     #242424;
+      --border2:    #333333;
+      --text:       #f0f0f0;
+      --text-dim:   #888888;
+      --text-muted: #444444;
+      --accent:     #ff3c1f;
+      --accent-dim: rgba(255,60,31,.12);
+      --white:      #ffffff;
+      --sidebar-w:  240px;
+      --radius:     6px;
+      --mono:       'JetBrains Mono', monospace;
+      --sans:       'Inter', sans-serif;
+      --display:    'Space Grotesk', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Main ─────────────────────────────────────────────────────── */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-left: 0;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .topbar {
+      height: 72px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-nav-link {
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .topbar-nav-link:hover {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .topbar-nav-link.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .current-page {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .topbar-title {
+      font-family: var(--display);
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      text-transform: none;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid var(--border2);
+      border-radius: 24px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .status-pill .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .4; }
+    }
+
+    .page-body {
+      flex: 1;
+      padding: 56px 56px 72px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────── */
+    .page-heading {
+      font-family: var(--display);
+      font-size: 64px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .page-sub {
+      font-size: 18px;
+      color: var(--text-dim);
+      margin-bottom: 48px;
+      font-weight: 400;
+      line-height: 1.6;
+      text-align: center;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 36px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--white);
+      color: #0a0a0a;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: #e0e0e0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(255,255,255,0.1);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--white);
+      color: var(--white);
+      transform: translateY(-1px);
+    }
+
+    /* ── Forms ──────────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 24px; }
+
+    .form-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 16px 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 16px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--white);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+    }
+
+    .form-control::placeholder { color: var(--text-muted); }
+
+    /* ── Alert ──────────────────────────────────────────────────────── */
+    .alert {
+      padding: 16px 20px;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 24px;
+      border: 1px solid;
+      font-weight: 500;
+    }
+
+    .alert-error {
+      background: rgba(239,68,68,.08);
+      border-color: rgba(239,68,68,.3);
+      color: #f87171;
+    }
+
+    .alert-success {
+      background: rgba(34,197,94,.08);
+      border-color: rgba(34,197,94,.3);
+      color: #4ade80;
+    }
+
+    .alert-info {
+      background: rgba(59,130,246,.08);
+      border-color: rgba(59,130,246,.3);
+      color: #60a5fa;
+    }
+
+    /* ── Divider ────────────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── Scrollbar ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+    /* ── Footer ────────────────────────────────────────────────────── */
+    .site-footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 0 24px;
+      margin-top: auto;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+    }
+
+    .footer-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .footer-brand {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-logo {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+
+    .footer-tagline {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .footer-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .footer-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--white);
+    }
+
+    .footer-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-indicator.online {
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 32px auto 0;
+      padding: 24px 32px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .copyright {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .copyright-text {
+      color: var(--text-dim);
+    }
+
+    /* ── Mobile fallback ────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .page-body { padding: 32px 24px; }
+      .page-heading { font-size: 48px; }
+      .page-sub { font-size: 16px; }
+      .topbar { padding: 0 16px; }
+      .topbar-nav { display: none; }
+      .topbar-left { gap: 8px; }
+      .topbar-title { font-size: 24px; }
+      .current-page { font-size: 16px; }
+      .topbar-right { gap: 12px; }
+      .topbar-nav-link { font-size: 12px; padding: 6px 12px; }
+      
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 0 24px;
+      }
+      
+      .footer-bottom {
+        padding: 24px 24px 0;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Main ─────────────────────────────────────────────────────── -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-nav">
+          <a href="{{ url_for('index') }}" class="topbar-nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+            Home
+          </a>
+          {% if session.get('user') %}
+          <a href="{{ url_for('detect') }}" class="topbar-nav-link {% if request.endpoint == 'detect' %}active{% endif %}">
+            Predict
+          </a>
+          {% endif %}
+          <a href="{{ url_for('tech') }}" class="topbar-nav-link {% if request.endpoint == 'tech' %}active{% endif %}">
+            Tech
+          </a>
+          <a href="{{ url_for('about') }}" class="topbar-nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+            About
+          </a>
+        </div>
+        
+        <span class="current-page">{% block breadcrumb %}Home{% endblock %}</span>
+      </div>
+      
+      <div class="topbar-title">
+        FireFound
+      </div>
+      
+      <div class="topbar-right">
+        {% if session.get('user') %}
+        <a href="{{ url_for('profile') }}" class="topbar-nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
+          Profile
+        </a>
+        <a href="{{ url_for('logout') }}" class="topbar-nav-link">
+          Logout
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="topbar-nav-link {% if request.endpoint == 'login' %}active{% endif %}">
+          Login
+        </a>
+        <a href="{{ url_for('register') }}" class="topbar-nav-link {% if request.endpoint == 'register' %}active{% endif %}">
+          Register
+        </a>
+        {% endif %}
+        <div class="status-pill">
+          <span class="dot"></span> System Online
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-brand">
+            <div class="footer-logo">FireFound</div>
+            <div class="footer-tagline">Early Wildfire Detection System</div>
+          </div>
+        </div>
+        
+        <div class="footer-section">
+          <div class="footer-title">Navigation</div>
+          <nav class="footer-nav">
+            <a href="{{ url_for('index') }}" class="footer-link">Home</a>
+            {% if session.get('user') %}
+            <a href="{{ url_for('detect') }}" class="footer-link">Predict</a>
+            {% endif %}
+            <a href="{{ url_for('tech') }}" class="footer-link">Technology</a>
+            <a href="{{ url_for('about') }}" class="footer-link">About</a>
+          </nav>
+        </div>
+        
+        <div class="footer-section">
+          <div class="footer-title">System</div>
+          <nav class="footer-nav">
+            {% if session.get('user') %}
+            <a href="{{ url_for('profile') }}" class="footer-link">Profile</a>
+            <a href="{{ url_for('logout') }}" class="footer-link">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="footer-link">Login</a>
+            <a href="{{ url_for('register') }}" class="footer-link">Register</a>
+            {% endif %}
+          </nav>
+        </div>
+        
+        <div class="footer-section">
+          <div class="footer-title">Status</div>
+          <div class="footer-status">
+            <div class="status-indicator online"></div>
+            <span>System Operational</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <div class="copyright">
+          &copy; 2024 FireFound. All rights reserved. | 
+          <span class="copyright-text">Advanced AI-Powered Wildfire Detection Technology</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+</div>
+
+</body>
+</html>

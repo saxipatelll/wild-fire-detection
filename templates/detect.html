@@ -1,0 +1,646 @@
+{% extends "base.html" %}
+{% block title %}FireFound — Predict{% endblock %}
+{% block breadcrumb %}Predict{% endblock %}
+
+{% block content %}
+<div class="page-heading" style="font-size: 32px;">Wildfire Detection</div>
+<p class="page-sub" style="font-size: 18px;">Upload a forest image to detect wildfire using advanced ML analysis.</p>
+
+<div class="detection-container">
+  <!-- Left Column: Upload -->
+  <div class="upload-column">
+    <div class="card">
+      <div class="card-title">Upload Image</div>
+      
+      <form id="predict-form" enctype="multipart/form-data">
+        <div class="upload-zone" id="drop-zone">
+          <input type="file" name="file" id="file-input" accept="image/*" required />
+          <div class="upload-icon">⬡</div>
+          <div class="upload-text">Drop image here or click to browse</div>
+          <div class="upload-hint">PNG · JPG · JPEG · WEBP</div>
+          <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+        
+        <div class="submit-bar" style="margin-top: 20px;">
+          <button type="submit" class="btn btn-primary" id="analyze-btn">◈ Analyse Image</button>
+          <button type="button" class="btn btn-outline" onclick="clearAll()">✕ Clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Middle Column: Image Preview -->
+  <div class="preview-column">
+    <div class="card">
+      <div class="card-title">Image Preview</div>
+      <div id="preview-container">
+        <div class="placeholder-preview">
+          <div class="placeholder-icon">🖼️</div>
+          <div class="placeholder-text">Your image will appear here</div>
+        </div>
+        <img id="preview" class="preview-img" src="" alt="Preview" style="display: none;" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Results -->
+  <div class="results-column">
+    <div class="card">
+      <div class="card-title">Detection Results</div>
+      <div id="result">
+        <div class="placeholder-result">
+          <div class="placeholder-icon">🔍</div>
+          <div class="placeholder-text">Upload an image to see detection results</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Three-column layout */
+.detection-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.upload-column,
+.preview-column,
+.results-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Upload zone styling */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 48px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface2);
+  position: relative;
+}
+
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--white);
+  background: #161616;
+}
+
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-icon { font-size: 36px; margin-bottom: 14px; opacity: .5; }
+.upload-text { font-size: 14px; color: var(--text-dim); margin-bottom: 6px; }
+.upload-hint { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--text-muted); }
+
+.preview-img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  object-fit: cover;
+  margin-top: 10px;
+}
+
+.submit-bar { display: flex; gap: 12px; align-items: center; }
+
+.loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+}
+
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.result-verdict {
+  font-family: var(--display);
+  font-size: 32px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.result-fire { color: var(--accent); }
+.result-nofire { color: #4ade80; }
+
+.result-image {
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-top: 15px;
+}
+
+/* Confidence Bars */
+.confidence-bar {
+  margin-bottom: 16px;
+}
+
+.confidence-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.confidence-value {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--white);
+}
+
+.confidence-track {
+  width: 100%;
+  height: 24px;
+  background: var(--surface2);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.confidence-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.fire-fill {
+  background: linear-gradient(135deg, #ff3c1f, #ff6b3d, #ff8f65);
+}
+
+.nofire-fill {
+  background: linear-gradient(135deg, #22c55e, #4ade80, #86efac);
+}
+
+/* Visual Indicator */
+.result-indicator {
+  display: flex;
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.indicator-fire,
+.indicator-nofire {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.indicator-fire {
+  background: linear-gradient(135deg, #ff3c1f, #ff6b3d);
+}
+
+.indicator-nofire {
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+}
+
+.indicator-text {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--white);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Poll-style visualization */
+.poll-container {
+  margin-top: 20px;
+}
+
+.poll-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 16px;
+  text-align: center;
+}
+
+.poll-bar {
+  height: 60px;
+  display: flex;
+  border-radius: 30px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.poll-fire,
+.poll-nofire {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.poll-fire {
+  background: linear-gradient(135deg, #dc2626, #ef4444, #f87171);
+}
+
+.poll-nofire {
+  background: linear-gradient(135deg, #059669, #10b981, #34d399);
+}
+
+.poll-percentage {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.poll-label {
+  position: absolute;
+  bottom: -25px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Placeholder styling */
+.placeholder-result,
+.placeholder-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 300px;
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface2);
+}
+
+.placeholder-result {
+  padding: 60px 40px;
+}
+
+.placeholder-preview {
+  padding: 60px 40px;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.placeholder-text {
+  font-size: 16px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* Preview image styling */
+.preview-img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .detection-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .upload-zone {
+    padding: 32px 24px;
+  }
+  
+  .placeholder-result,
+  .placeholder-preview {
+    padding: 40px 24px;
+    min-height: 200px;
+  }
+  
+  .placeholder-icon {
+    font-size: 36px;
+  }
+  
+  .placeholder-text {
+    font-size: 14px;
+  }
+  
+  .preview-img {
+    height: 200px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .detection-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .preview-column {
+    grid-column: 1 / -1;
+    order: 2;
+  }
+  
+  .results-column {
+    order: 3;
+  }
+}
+</style>
+
+<script>
+const input = document.getElementById('file-input');
+const preview = document.getElementById('preview');
+const dropZone = document.getElementById('drop-zone');
+const form = document.getElementById('predict-form');
+const resultDiv = document.getElementById('result');
+const loadingOverlay = document.getElementById('loading-overlay');
+const analyzeBtn = document.getElementById('analyze-btn');
+const previewContainer = document.getElementById('preview-container');
+
+// File input change
+input.addEventListener('change', () => {
+  const file = input.files[0];
+  if (file) {
+    displayPreview(file);
+  }
+});
+
+// Drag and drop
+['dragover','dragenter'].forEach(e => {
+  dropZone.addEventListener(e, ev => {
+    ev.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+});
+
+['dragleave','drop'].forEach(e => {
+  dropZone.addEventListener(e, () => dropZone.classList.remove('drag-over'));
+});
+
+dropZone.addEventListener('drop', ev => {
+  ev.preventDefault();
+  const file = ev.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    displayPreview(file);
+  }
+});
+
+function displayPreview(file) {
+  if (file.type.startsWith('image/')) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    
+    // Hide preview placeholder
+    const placeholder = previewContainer.querySelector('.placeholder-preview');
+    if (placeholder) {
+      placeholder.style.display = 'none';
+    }
+    
+    clearError();
+  } else {
+    showError('Please select an image file (PNG, JPG, JPEG, WEBP)');
+  }
+}
+
+function clearAll() {
+  input.value = '';
+  preview.src = '';
+  preview.style.display = 'none';
+  
+  // Show preview placeholder again
+  const placeholder = previewContainer.querySelector('.placeholder-preview');
+  if (placeholder) {
+    placeholder.style.display = 'flex';
+  }
+  
+  resultDiv.innerHTML = '';
+  clearError();
+}
+
+function showError(message) {
+  resultDiv.innerHTML = `<div class="alert alert-error">⚠️ Error: ${message}</div>`;
+}
+
+function clearError() {
+  resultDiv.innerHTML = '';
+}
+
+function showLoading() {
+  loadingOverlay.style.display = 'flex';
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = '⏳ <span id="loading-text">Analyzing image...</span>';
+  
+  // Simulate progress steps for better UX
+  let step = 0;
+  const steps = [
+    'Loading image...',
+    'Extracting features...',
+    'Analyzing patterns...',
+    'Detecting wildfire...',
+    'Finalizing results...'
+  ];
+  
+  const progressInterval = setInterval(() => {
+    step = (step + 1) % steps.length;
+    const loadingText = document.getElementById('loading-text');
+    if (loadingText) {
+      loadingText.textContent = steps[step];
+    }
+  }, 800);
+  
+  // Store interval ID to clear later
+  window.progressInterval = progressInterval;
+}
+
+function hideLoading() {
+  loadingOverlay.style.display = 'none';
+  analyzeBtn.disabled = false;
+  analyzeBtn.textContent = '◈ Analyse Image';
+  
+  // Clear progress interval
+  if (window.progressInterval) {
+    clearInterval(window.progressInterval);
+    window.progressInterval = null;
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const file = input.files[0];
+  if (!file) {
+    showError('Please select an image file');
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    showError('Invalid file type. Please select an image file.');
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    showError('File too large. Please select an image under 10MB.');
+    return;
+  }
+
+  showLoading();
+  clearError();
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('/predict', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.error) {
+      showError(result.error);
+    } else {
+      const verdictClass = result.prediction === 1 ? 'result-fire' : 'result-nofire';
+      const alertClass = result.prediction === 1 ? 'alert-error' : 'alert-success';
+      
+      resultDiv.innerHTML = `
+        <div class="alert ${alertClass}">
+          <div class="result-verdict ${verdictClass}">
+            ${result.label}
+          </div>
+          
+          ${result.prediction === 1 ? `
+          <!-- Fire Detection: Show only no-fire confidence poll -->
+          <div class="poll-container">
+            <div class="poll-title">No Fire Confidence</div>
+            <div class="poll-bar">
+              <div class="poll-nofire" style="width: ${result.nofire_conf}%">
+                <span class="poll-percentage">${result.nofire_conf}%</span>
+                <span class="poll-label" style="right: 10px;">🌿 SAFE</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin: 20px 0;">
+            <div style="font-weight: 600; margin-bottom: 12px; font-size: 16px;">Detailed Analysis</div>
+            
+            <!-- Fire Confidence Bar -->
+            <div class="confidence-bar">
+              <div class="confidence-label">
+                <span>🔥 Fire Risk</span>
+                <span class="confidence-value">${result.fire_conf}%</span>
+              </div>
+              <div class="confidence-track">
+                <div class="confidence-fill fire-fill" style="width: ${result.fire_conf}%"></div>
+              </div>
+            </div>
+            
+            <!-- No Fire Confidence Bar -->
+            <div class="confidence-bar">
+              <div class="confidence-label">
+                <span>🌿 No Fire</span>
+                <span class="confidence-value">${result.nofire_conf}%</span>
+              </div>
+              <div class="confidence-track">
+                <div class="confidence-fill nofire-fill" style="width: ${result.nofire_conf}%"></div>
+              </div>
+            </div>
+            
+                      </div>
+          ` : `
+          <!-- No Fire Detection: Show simple message -->
+          <div style="margin: 20px 0; text-align: center;">
+            <div style="font-size: 24px; font-weight: 600; color: #22c55e; margin-bottom: 12px;">
+              🌿 YOU'RE SAFE
+            </div>
+            <div style="font-size: 16px; color: var(--text-dim); line-height: 1.5;">
+              No wildfire detected in this image. The area appears to be safe from fire threats.
+            </div>
+            <div style="margin-top: 16px; font-size: 14px; color: var(--text-muted);">
+              Detection Confidence: ${result.nofire_conf}%
+            </div>
+          </div>
+          `}
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.name === 'TypeError') {
+      showError('Network error. Please check your connection and try again.');
+    } else if (error.message.includes('HTTP error')) {
+      showError('Server error. Please try again later.');
+    } else {
+      showError('An unexpected error occurred. Please try again.');
+    }
+  } finally {
+    hideLoading();
+  }
+});
+</script>
+{% endblock %}

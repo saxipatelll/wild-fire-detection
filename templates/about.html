@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}FireFound — About{% endblock %}
+{% block breadcrumb %}About{% endblock %}
+
+{% block extra_head %}
+<style>
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .section-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+  }
+  .section-block.full { grid-column: 1 / -1; }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .section-title {
+    font-family: var(--display);
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 14px;
+  }
+  .section-body {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.85;
+  }
+  .method-list { list-style: none; margin-top: 14px; }
+  .method-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 10px;
+  }
+  .method-list li:last-child { border-bottom: none; }
+  .method-list li::before { content: '›'; color: var(--accent); }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-metric { font-size: 13px; color: var(--text-dim); }
+  .result-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .scope-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .scope-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .scope-item strong {
+    display: block;
+    color: var(--white);
+    font-size: 12px;
+    margin-bottom: 5px;
+    font-family: var(--mono);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading">About</div>
+<p class="page-sub">Project documentation — objective, methodology, results and future scope.</p>
+
+<div class="about-grid">
+
+  <!-- Vision -->
+  <div class="section-block">
+    <div class="section-num">01 — Vision</div>
+    <div class="section-title">Our Vision</div>
+    <div class="section-body">
+      FireFound envisions a world where technology serves as the first line of defense 
+      against wildfire disasters. We believe that early, accurate detection can save lives, 
+      protect ecosystems, and preserve natural resources for future generations. Our mission 
+      is to make advanced wildfire detection accessible, reliable, and deployable anywhere 
+      it's needed most.
+    </div>
+  </div>
+
+  <!-- Problem Statement -->
+  <div class="section-block">
+    <div class="section-num">02 — Problem Statement</div>
+    <div class="section-title">The Problem</div>
+    <div class="section-body">
+      Wildfires are among the most destructive natural disasters. Early automated
+      detection from images — satellite, drone, or camera feeds — can provide critical
+      advance warning. This project demonstrates that a carefully engineered classical
+      pipeline can achieve competitive accuracy without deep learning, making it
+      deployable on resource-constrained hardware.
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div class="section-block full">
+    <div class="section-num">03 — Methodology</div>
+    <div class="section-title">How It Works</div>
+    <div class="section-body">
+      The pipeline processes each image through a multi-stage feature extraction and
+      classification workflow:
+    </div>
+    <ul class="method-list">
+      <li>Images are resized to 128×128 px and converted to grayscale and HSV color spaces.</li>
+      <li style="text-align: left;">HOG (Histogram of Oriented Gradients) descriptors capture gradient direction and magnitude — encoding the chaotic edge patterns of fire and smoke (~3780 dims).</li>
+      <li>HSV channel histograms (32 bins each) model fire's distinctive color distribution in hue-saturation-value space (~96 dims).</li>
+      <li>A 4×4 spatial grid of grayscale statistics (mean, std, skewness proxy) captures local texture variation (~48 dims).</li>
+      <li>All features are concatenated into a ~3924-dim vector, scaled with StandardScaler, then compressed via PCA (95% variance retained, ~300 dims).</li>
+      <li>An SVM with RBF kernel (C and γ tuned via 5-fold GridSearchCV) classifies the PCA features into fire / no-fire.</li>
+    </ul>
+  </div>
+
+  <!-- Results -->
+  <div class="section-block">
+    <div class="section-num">04 — Results</div>
+    <div class="section-title">Performance</div>
+    <div class="section-body" style="margin-bottom:16px">
+      Final Test Accuracy: 91.18% - Actual performance evaluation on held-out test data.
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Final Test Accuracy</span>
+      <span class="result-val">91.18%</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">5-Fold CV Accuracy</span>
+      <span class="result-val">89.58% ± 2.48%</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Precision (No Fire)</span>
+      <span class="result-val">0.88</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Recall (No Fire)</span>
+      <span class="result-val">1.00</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">F1-Score (No Fire)</span>
+      <span class="result-val">0.94</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Precision (Fire)</span>
+      <span class="result-val">1.00</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Recall (Fire)</span>
+      <span class="result-val">0.73</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">F1-Score (Fire)</span>
+      <span class="result-val">0.84</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Best Kernel</span>
+      <span class="result-val">RBF (C=10)</span>
+    </div>
+    <div class="result-row">
+      <span class="result-metric">Test Dataset Size</span>
+      <span class="result-val">68 images</span>
+    </div>
+  </div>
+
+  <!-- Future Scope -->
+  <div class="section-block">
+    <div class="section-num">05 — Future Scope</div>
+    <div class="section-title">Next Steps</div>
+    <div class="section-body" style="margin-bottom:16px">
+      Several enhancements can push accuracy toward 95%+ without deep learning:
+    </div>
+    <div class="scope-grid">
+      <div class="scope-item">
+        <strong>Data Augmentation</strong>
+        Horizontal flips, brightness jitter, and random crops to expand training diversity.
+      </div>
+      <div class="scope-item">
+        <strong>Ensemble SVM</strong>
+        Bagging multiple SVM models trained on feature subsets — reduces variance.
+      </div>
+      <div class="scope-item">
+        <strong>LBP Features</strong>
+        Local Binary Patterns add rotation-invariant texture representation.
+      </div>
+      <div class="scope-item">
+        <strong>Colour Moments</strong>
+        Statistical moments (mean, std, skew) per channel in RGB + LAB spaces.
+      </div>
+      <div class="scope-item">
+        <strong>Hard Negative Mining</strong>
+        Iteratively retrain on misclassified no-fire images that look like fire.
+      </div>
+      <div class="scope-item">
+        <strong>Real-Time Integration</strong>
+        Connect to live drone/satellite feeds with sliding-window detection.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

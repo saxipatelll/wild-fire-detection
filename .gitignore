@@ -1,0 +1,59 @@
+# Python cache
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+
+venv/
+env/
+.venv/
+ENV/
+
+# Environment variables
+
+.env
+
+# Jupyter Notebook checkpoints
+
+.ipynb_checkpoints/
+
+# Flask specific
+
+instance/
+.webassets-cache
+
+# Uploaded user files
+
+static/uploads/
+
+# User data (login info)
+
+users.json
+
+# Logs
+
+*.log
+
+# OS generated files
+
+.DS_Store
+Thumbs.db
+
+# IDE / Editor settings
+
+.vscode/
+.idea/
+
+# Temporary files
+
+*.tmp
+*.bak
+*.swp
+
+# Build / distribution files
+
+build/
+dist/
+*.egg-info/

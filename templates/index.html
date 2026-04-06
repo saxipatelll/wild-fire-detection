@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}FireFound — Home{% endblock %}
+{% block breadcrumb %}Home{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .hero-main {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 56px 48px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-main::before {
+    content: 'FF';
+    position: absolute;
+    right: 40px;
+    top: -30px;
+    font-family: var(--display);
+    font-size: 240px;
+    color: rgba(255,60,31,.04);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .hero-main::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .hero-heading {
+    font-family: var(--display);
+    font-size: 72px;
+    letter-spacing: 4px;
+    color: var(--white);
+    line-height: .95;
+    margin-bottom: 20px;
+  }
+
+  .hero-desc {
+    max-width: 680px;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: center;
+}
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    position: relative;
+  }
+
+  .stat-number {
+    font-family: var(--display);
+    font-size: 52px;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .stat-card .accent-line {
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .feature-item {
+    padding: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .feature-icon {
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .feature-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--white);
+  }
+
+  .feature-desc {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="hero-main">
+  <div class="hero-label">◈ Early Wildfire Detection System</div>
+  <div class="hero-heading">Detect Fire Before It Gets Higher</div>
+  <p class="hero-desc">
+    Advanced AI-powered system that identifies wildfire threats in real-time, providing critical early warnings 
+    to protect communities, save lives, and prevent environmental disasters before they escalate.
+  </p>
+  <div class="hero-actions">
+    {% if session.get('user') %}
+      <a href="{{ url_for('detect') }}" class="btn btn-primary">→ Start Detection</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" class="btn btn-primary">→ Login to Detect</a>
+      <a href="{{ url_for('register') }}" class="btn btn-outline">Create Account</a>
+    {% endif %}
+    <a href="{{ url_for('about') }}" class="btn btn-outline">Learn More</a>
+  </div>
+</div>
+
+<!-- Benefits -->
+<div class="hero-grid">
+  <div class="stat-card">
+    <div class="accent-line"></div>
+    <div class="stat-number">90%+</div>
+    <div class="stat-label">Detection Accuracy</div>
+  </div>
+  <div class="stat-card">
+    <div class="accent-line"></div>
+    <div class="stat-number">24/7</div>
+    <div class="stat-label">Continuous Monitoring</div>
+  </div>
+  <div class="stat-card">
+    <div class="accent-line"></div>
+    <div class="stat-number">Real-Time</div>
+    <div class="stat-label">Alert System</div>
+  </div>
+  <div class="stat-card">
+    <div class="accent-line"></div>
+    <div class="stat-number">Lives</div>
+    <div class="stat-label">Protected Daily</div>
+  </div>
+</div>
+
+<!-- Key Features -->
+<div class="card">
+  <div class="card-title">Why FireFound Works</div>
+  <div class="features-grid">
+    <div class="feature-item">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Lightning Fast Detection</div>
+      <div class="feature-desc">Identifies wildfire signatures within seconds of image capture.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Pinpoint Accuracy</div>
+      <div class="feature-desc">Advanced algorithms ensure precise fire detection with minimal false alarms.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🌍</div>
+      <div class="feature-title">Global Coverage</div>
+      <div class="feature-desc">Works with aerial and ground-level imagery from anywhere in the world.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">Easy Integration</div>
+      <div class="feature-desc">Seamlessly integrates with existing monitoring systems and workflows.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-title">Proactive Protection</div>
+      <div class="feature-desc">Early warnings enable rapid response before fires spread out of control.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Smart Analytics</div>
+      <div class="feature-desc">Provides insights and trends to improve wildfire prevention strategies.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

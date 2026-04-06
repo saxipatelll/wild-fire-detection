@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}FireFound — Profile{% endblock %}
+{% block breadcrumb %}Profile{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+  <div class="card-title">User Profile</div>
+  
+  <div style="text-align: center; margin-bottom: 32px;">
+    <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--accent); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--white);">
+      👤
+    </div>
+    <h2 style="font-family: var(--display); font-size: 24px; color: var(--white); margin-bottom: 8px;">
+      {{ session.get('user', 'User') }}
+    </h2>
+    <p style="color: var(--text-dim); font-size: 14px;">
+      Wildfire Detection System User
+    </p>
+  </div>
+  
+  <div class="divider"></div>
+  
+  <div style="display: grid; gap: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+      <span style="color: var(--text-dim);">Username</span>
+      <span style="color: var(--white); font-family: var(--mono);">{{ session.get('user', 'User') }}</span>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+      <span style="color: var(--text-dim);">Account Type</span>
+      <span style="color: var(--white); font-family: var(--mono);">Standard</span>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+      <span style="color: var(--text-dim);">Member Since</span>
+      <span style="color: var(--white); font-family: var(--mono);">Today</span>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+      <span style="color: var(--text-dim);">Status</span>
+      <span style="color: #22c55e; font-family: var(--mono);">Active</span>
+    </div>
+  </div>
+  
+  <div class="divider"></div>
+  
+  <div style="display: flex; gap: 12px; justify-content: flex-end;">
+    <a href="{{ url_for('detect') }}" class="btn btn-outline">Back to Detection</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-primary">Logout</a>
+  </div>
+</div>
+{% endblock %}

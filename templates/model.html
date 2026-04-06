@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+{% block title %}FireFound — Predict{% endblock %}
+{% block breadcrumb %}Predict{% endblock %}
+
+{% block extra_head %}
+<style>
+  .predict-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--surface2);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--white);
+    background: #161616;
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon { font-size: 36px; margin-bottom: 14px; opacity: .5; }
+
+  .upload-text {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .upload-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+
+  .preview-img {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    object-fit: cover;
+    max-height: 260px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  /* Result panel */
+  .result-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .result-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .result-body { padding: 28px 24px; }
+
+  .verdict {
+    font-family: var(--display);
+    font-size: 42px;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+    line-height: 1;
+  }
+
+  .verdict.fire   { color: var(--accent); }
+  .verdict.nofire { color: #4ade80; }
+
+  .verdict-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+    font-family: var(--mono);
+  }
+
+  /* Probability bars */
+  .prob-section { margin-top: 4px; }
+
+  .prob-row { margin-bottom: 16px; }
+
+  .prob-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+
+  .prob-meta .pct {
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .prob-bar-bg {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .6s ease;
+  }
+
+  .bar-fire   { background: var(--accent); }
+  .bar-nofire { background: #4ade80; }
+
+  .result-image {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    object-fit: cover;
+    max-height: 200px;
+    margin-top: 20px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .empty-state .big-icon { font-size: 48px; margin-bottom: 14px; opacity: .3; }
+  .empty-state p { font-size: 13px; }
+
+  /* Submit bar */
+  .submit-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    align-items: center;
+  }
+
+  /* Model info badge */
+  .model-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 12px;
+  }
+
+  .badge-enhanced {
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+    border: 1px solid #4ade80;
+  }
+
+  .badge-standard {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .confidence-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-left: 8px;
+  }
+
+  .confidence-high {
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+  }
+
+  .confidence-medium {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+  }
+
+  .confidence-low {
+    background: rgba(255, 107, 107, 0.2);
+    color: #ff6b6b;
+  }
+
+  /* Loading state */
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Info cards below */
+  .info-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .info-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .info-card .ic-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .info-card p {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+
+  /* Error message */
+  .error-message {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .error-message.show {
+    display: block;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading">Predict</div>
+<p class="page-sub">Upload a forest / aerial image to classify — Wildfire or Normal Sky.</p>
+
+<form id="predict-form">
+  <div class="predict-grid">
+
+    <!-- Upload Panel -->
+    <div>
+      <div class="card-title">Input Image</div>
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" name="image" id="file-input" accept="image/*" required />
+        <div class="upload-icon">⬡</div>
+        <div class="upload-text">Drop image here or click to browse</div>
+        <div class="upload-hint">PNG · JPG · JPEG · BMP · WEBP</div>
+        <div class="loading-overlay" id="loading-overlay">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+      <img id="preview" class="preview-img" src="" alt="Preview" />
+      <div class="submit-bar">
+        <button type="submit" class="btn btn-primary" id="analyze-btn">◈ Analyse Image</button>
+        <button type="button" class="btn btn-outline" onclick="clearPreview()">✕ Clear</button>
+      </div>
+      <div class="error-message" id="error-message"></div>
+    </div>
+
+    <!-- Result Panel -->
+    <div>
+      <div class="card-title">Detection Result</div>
+      <div class="result-panel">
+        <div class="result-header">◈ Classification Output</div>
+
+        <div id="result-container">
+          <div class="empty-state">
+            <div class="big-icon">◈</div>
+            <p>Upload an image and click<br><strong>Analyse Image</strong> to see results.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<!-- Info cards -->
+<div class="info-row">
+  <div class="info-card">
+    <div class="ic-title">Enhanced Features</div>
+    <p>Advanced HSV color analysis, HOG texture detection, LBP patterns, Gabor filters, and shape features for comprehensive fire detection.</p>
+  </div>
+  <div class="info-card">
+    <div class="ic-title">Ensemble Model</div>
+    <p>Combines SVM and Random Forest with soft voting to achieve 95%+ accuracy through complementary algorithm strengths.</p>
+  </div>
+  <div class="info-card">
+    <div class="ic-title">Smart Selection</div>
+    <p>Feature selection reduces dimensionality from 10,000+ to 3,000 optimal features, improving performance and reducing overfitting.</p>
+  </div>
+</div>
+
+<script>
+  const input = document.getElementById('file-input');
+  const preview = document.getElementById('preview');
+  const dropZone = document.getElementById('drop-zone');
+  const form = document.getElementById('predict-form');
+  const resultContainer = document.getElementById('result-container');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const errorMessage = document.getElementById('error-message');
+
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    }
+  });
+
+  // Drag-and-drop
+  ['dragover','dragenter'].forEach(e => {
+    dropZone.addEventListener(e, ev => {
+      ev.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+  });
+  ['dragleave','drop'].forEach(e => {
+    dropZone.addEventListener(e, () => dropZone.classList.remove('drag-over'));
+  });
+  dropZone.addEventListener('drop', ev => {
+    ev.preventDefault();
+    const file = ev.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    }
+  });
+
+  function clearPreview() {
+    input.value = '';
+    preview.src = '';
+    preview.style.display = 'none';
+    resultContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="big-icon">◈</div>
+        <p>Upload an image and click<br><strong>Analyse Image</strong> to see results.</p>
+      </div>
+    `;
+    errorMessage.classList.remove('show');
+  }
+
+  function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.add('show');
+  }
+
+  function hideError() {
+    errorMessage.classList.remove('show');
+  }
+
+  function getConfidenceClass(level) {
+    switch(level) {
+      case 'High': return 'confidence-high';
+      case 'Medium': return 'confidence-medium';
+      case 'Low': return 'confidence-low';
+      default: return 'confidence-low';
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const file = input.files[0];
+    if (!file) {
+      showError('Please select an image file');
+      return;
+    }
+
+    hideError();
+    loadingOverlay.classList.add('active');
+    analyzeBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/predict', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.error) {
+        showError(result.error);
+        return;
+      }
+
+      // Display results
+      const isFire = result.prediction === 1;
+      const confidenceClass = getConfidenceClass(result.confidence_level);
+      
+      resultContainer.innerHTML = `
+        <div class="result-body">
+          <div class="verdict ${isFire ? 'fire' : 'nofire'}">
+            ${result.label}
+          </div>
+          <div class="verdict-sub">
+            ${isFire ? '🔥 Fire signature detected' : '🌿 No fire detected'}
+            <span class="confidence-indicator ${confidenceClass}">
+              ${result.confidence_level} Confidence
+            </span>
+          </div>
+
+          <div class="prob-section">
+            <div class="prob-row">
+              <div class="prob-meta">
+                <span>Wildfire</span>
+                <span class="pct">${result.fire_conf}%</span>
+              </div>
+              <div class="prob-bar-bg">
+                <div class="prob-bar-fill bar-fire" style="width: ${result.fire_conf}%"></div>
+              </div>
+            </div>
+            <div class="prob-row">
+              <div class="prob-meta">
+                <span>Normal Sky</span>
+                <span class="pct">${result.nofire_conf}%</span>
+              </div>
+              <div class="prob-bar-bg">
+                <div class="prob-bar-fill bar-nofire" style="width: ${result.nofire_conf}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <img src="${result.image_url}" class="result-image" alt="Uploaded image" />
+          
+          <div class="model-badge ${result.enhanced ? 'badge-enhanced' : 'badge-standard'}">
+            ${result.enhanced ? '⚡ Enhanced Model' : '📊 Standard Model'}
+            <span style="margin-left: 6px; opacity: 0.7;">${result.model_info.accuracy}</span>
+          </div>
+        </div>
+      `;
+
+    } catch (error) {
+      showError('Network error. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      loadingOverlay.classList.remove('active');
+      analyzeBtn.disabled = false;
+    }
+  });
+</script>
+{% endblock %}
