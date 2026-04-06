@@ -122,7 +122,7 @@ This project solves the problem using a complete ML pipeline:
 
 ```
 wild-fire-detection/
-│── model/
+│── model/              @ignored
 │   ├── scaler.pkl
 │   ├── pca.pkl
 │   └── svm_model.pkl
@@ -136,10 +136,16 @@ wild-fire-detection/
 │
 │── FireFound-Documentation.docx
 │   
-│
+│__ users.json           #ignored
 │── app.py
 │── README.md
-
+|__ .gitignore
+|__ FireFound_Model.ipynb
+|__ app.py
+|__ confusion_matrix.png
+|__ confusion_heatmap.png
+|__ feature_importance.png
+|__ sample_presictions.png
 
 ---
 
