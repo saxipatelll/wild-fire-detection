@@ -139,15 +139,7 @@ wild-fire-detection/
 │
 │── app.py
 │── README.md
-```
 
----
-
-Open in browser:
-
-```
-http://127.0.0.1:5000/
-```
 
 ---
 
@@ -165,5 +157,4 @@ http://127.0.0.1:5000/
 
 **Saxi Patel**
 AI Engineer
-AI Learner | Entrepreneur | Content Creator
 
